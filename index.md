@@ -2,7 +2,7 @@
 
 ## Разделы
 
-- [Бизнес-процессы](./business-process/business-process.md)
+- [GraphQL](./GraphQL/GraphQL.md)
 - [Заинтересованные стороны](./stakeholders/stakeholders.md)
 - [Функциональные и нефункциональные требования](./requirements/requirements.md)
 - [Модель данных](./data-model/data-model.md)
