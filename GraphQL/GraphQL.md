@@ -1,12 +1,14 @@
-# GraphQL API Design: Specifications & Sequence Diagrams
+# GraphQL API Спецификация
 
 ## 📌 Overview
-Technical specifications for a GraphQL API integrating with a frontend system, including queries, mutations, subscriptions, and error handling.
+Это техническая спецификация GraphQL API, предназначенная для взаимодействия фронтенда с бэкендом.
 
 ---
 
 ## GraphQL Schema (SDL)
 ```graphql
+# Типы данных
+
 type User {
   id: ID!
   name: String!
@@ -35,6 +37,8 @@ enum OrderStatus {
   CANCELLED
 }
 
+# Queries
+
 type Query {
   getUser(id: ID!): User
   getAllUsers: [User!]!
@@ -44,6 +48,8 @@ type Query {
   getUserOrders(userId: ID!): [Order!]!
 }
 
+# Mutations
+
 type Mutation {
   createUser(name: String!, email: String!): User!
   updateUser(id: ID!, name: String, email: String): User!
@@ -51,6 +57,8 @@ type Mutation {
   placeOrder(userId: ID!, productIds: [ID!]!): Order!
   cancelOrder(id: ID!): Order!
 }
+
+# Subscriptions
 
 type Subscription {
   userCreated: User!
@@ -119,6 +127,7 @@ subscription OnOrderStatusChanged($orderId: ID!) {
 
 ## Пример ошибки
 ```graphql
+# Error
 {
   "errors": [
     {
