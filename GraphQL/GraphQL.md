@@ -1,178 +1,133 @@
+# GraphQL API Design: Specifications & Sequence Diagrams
 
-# 📦 GraphQL API Спецификация
-
-## 🧩 Описание
-
-Это техническая спецификация GraphQL API для системы маркетплейса, предназначенная для взаимодействия фронтенда с бэкендом.
-
-Поддерживаются:
-- **Запросы (queries)** — для получения данных
-- **Мутации (mutations)** — для изменения данных
-- **Подписки (subscriptions)** — для получения обновлений в реальном времени
+## 📌 Overview
+Technical specifications for a GraphQL API integrating with a frontend system, including queries, mutations, subscriptions, and error handling.
 
 ---
 
-## 📚 Типы данных
-
+## GraphQL Schema (SDL)
 ```graphql
-type Seller {
+type User {
   id: ID!
-  companyName: String!
-  inn: String!
+  name: String!
   email: String!
-  phone: String!
-  registrationStatus: String!
-  createdAt: String!
+  orders: [Order!]!
 }
 
 type Product {
   id: ID!
-  sellerId: ID!
-  name: String!
-  description: String
+  title: String!
   price: Float!
-  sku: String!
-  category: String
-  status: String!
-  createdAt: String!
-}
-
-type Inventory {
-  id: ID!
-  productId: ID!
-  quantity: Int!
-  warehouseLocation: String!
-  updatedAt: String!
+  stock: Int!
 }
 
 type Order {
   id: ID!
-  productId: ID!
-  buyerId: ID!
-  quantity: Int!
-  status: String!
-  orderedAt: String!
+  user: User!
+  products: [Product!]!
+  status: OrderStatus!
+  createdAt: String!
 }
 
-type Buyer {
-  id: ID!
-  fullName: String!
-  email: String!
-  phone: String!
-  address: String!
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
 }
-```
 
----
-
-## 🔍 Queries
-
-```graphql
 type Query {
-  # Sellers
-  getSeller(id: ID!): Seller
-  listSellers: [Seller]
-
-  # Products
+  getUser(id: ID!): User
+  getAllUsers: [User!]!
   getProduct(id: ID!): Product
-  listProducts(sellerId: ID): [Product]
-
-  # Inventory
-  getInventory(productId: ID!): Inventory
-
-  # Orders
+  getAllProducts: [Product!]!
   getOrder(id: ID!): Order
-  listOrders(buyerId: ID, sellerId: ID): [Order]
-
-  # Buyers
-  getBuyer(id: ID!): Buyer
+  getUserOrders(userId: ID!): [Order!]!
 }
-```
 
----
-
-## ✏️ Mutations
-
-```graphql
 type Mutation {
-  # Seller
-  createSeller(companyName: String!, inn: String!, email: String!, phone: String!): Seller
-  updateSeller(id: ID!, email: String, phone: String): Seller
-
-  # Product
-  createProduct(
-    sellerId: ID!,
-    name: String!,
-    description: String,
-    price: Float!,
-    sku: String!,
-    category: String
-  ): Product
-  updateProduct(id: ID!, name: String, price: Float, status: String): Product
-
-  # Inventory
-  updateInventory(productId: ID!, quantity: Int!, warehouseLocation: String!): Inventory
-
-  # Order
-  createOrder(productId: ID!, buyerId: ID!, quantity: Int!): Order
-  updateOrderStatus(id: ID!, status: String!): Order
-
-  # Buyer
-  createBuyer(fullName: String!, email: String!, phone: String!, address: String!): Buyer
+  createUser(name: String!, email: String!): User!
+  updateUser(id: ID!, name: String, email: String): User!
+  createProduct(title: String!, price: Float!, stock: Int!): Product!
+  placeOrder(userId: ID!, productIds: [ID!]!): Order!
+  cancelOrder(id: ID!): Order!
 }
-```
 
----
-
-## 📡 Subscriptions
-
-```graphql
 type Subscription {
-  productCreated(sellerId: ID): Product
-  orderCreated(sellerId: ID): Order
-  orderStatusUpdated(orderId: ID): Order
+  userCreated: User!
+  orderStatusChanged(orderId: ID!): Order!
+  productStockUpdated: Product!
 }
 ```
 
----
-
-## ⚠️ Возможные ошибки
-
-| Код ошибки             | Описание |
-|------------------------|----------|
-| `SellerNotFound`       | Продавец с указанным ID не найден |
-| `ProductNotFound`      | Товар с указанным ID не найден |
-| `InventoryMismatch`    | Недостаточно товара на складе |
-| `UnauthorizedAccess`   | Нет прав на выполнение действия |
-| `ValidationError`      | Ошибка валидации входных данных |
-| `InternalServerError`  | Системная ошибка на стороне сервера |
-
----
-
-## 🚀 Пример использования
-
+## Примеры операций
 ```graphql
-mutation {
-  createProduct(
-    sellerId: "abc123",
-    name: "Футболка",
-    description: "Хлопковая футболка",
-    price: 1499.99,
-    sku: "TSHIRT-001",
-    category: "Одежда"
-  ) {
+# Get user by ID
+query GetUser($userId: ID!) {
+  getUser(id: $userId) {
     id
     name
+    email
+  }
+}
+
+# List all products
+query GetAllProducts {
+  getAllProducts {
+    id
+    title
+    price
+  }
+}
+
+# Create user
+mutation CreateUser($name: String!, $email: String!) {
+  createUser(name: $name, email: $email) {
+    id
+    name
+  }
+}
+
+# Place order
+mutation PlaceOrder($userId: ID!, $productIds: [ID!]!) {
+  placeOrder(userId: $userId, productIds: $productIds) {
+    id
+    status
+  }
+}
+
+# Track order status changes
+subscription OnOrderStatusChanged($orderId: ID!) {
+  orderStatusChanged(orderId: $orderId) {
+    id
     status
   }
 }
 ```
+---
+
+## Ошибки
+
+| Код ошибки          | Условие                      | Пример сообщения                  |
+|---------------------|------------------------------|-----------------------------------|
+| NOT_FOUND           | Ресурс не существует         | Product with ID '456' not found   |
+| UNAUTHENTICATED     | Пользователь не авторизован  | Login required                    |
+| FORBIDDEN           | Нет прав доступа             | Cannot cancel completed order     |
+| BAD_REQUEST         | Невалидные данные            | Email must be a valid address     |
+| INTERNAL_ERROR      | Ошибка сервера               | Database connection failed        |
 
 ---
 
-## 📬 Авторы
-
-- Архитектор API: *[Ваше Имя]*
-- Поддержка: `support@example.com`
-
----
+## Пример ошибки
+```graphql
+{
+  "errors": [
+    {
+      "message": "User not found",
+      "extensions": {
+        "code": "NOT_FOUND",
+        "details": "User with ID '123' does not exist"
+      }
+    }
+  ]
+}
+```
